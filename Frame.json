@@ -2,7 +2,7 @@
   "version": "vNext",
   "frame": {
     "image": "https://senin-oyunun.github.io/frame-preview.png",
-    "post_url": "https://senin-oyunun.github.io/frame-handler",
+    "post_url": "https://mazaya25.github.io/frame-handler",
     "buttons": [
       { "label": "Oyna", "action": "post" }
     ]
