@@ -1,8 +1,8 @@
 {
   "version": "vNext",
   "frame": {
-    "image": "https://senin-oyunun.github.io/frame-preview.png",
-    "post_url": "https://mazaya25.github.io/frame-handler",
+    "image": "https://github.com/mazaya25/CoinTaps-v1/blob/main/Screenshot_2025-03-16-10-41-46-158_com.android.chrome-edit.jpg",
+    "post_url": "https://mazaya25.github.io/CoinTaps-v1/frame-handler",
     "buttons": [
       { "label": "Oyna", "action": "post" }
     ]
