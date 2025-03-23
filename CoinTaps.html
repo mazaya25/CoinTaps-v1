@@ -3,559 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CoinTaps</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <title>Wave with TV Noise Transition</title>
     <style>
         body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
             margin: 0;
+            background: linear-gradient(45deg, #0A0A2A, #000010);
+            animation: gradientShift 10s ease infinite;
             overflow: hidden;
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            flex-direction: column;
-            background-color: #383e42;
         }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 50% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glitch-container {
+            position: relative;
+            width: 1024px;
+            height: 1024px;
+        }
+
         canvas {
-            display: none;
-            max-width: 400px;
-            max-height: 800px;
-            width: 100%;
-            height: 80vh;
-            border: 5px solid rgba(0, 0, 0, 0);
-            touch-action: none;
-        }
-        #startScreen {
             position: absolute;
-            text-align: center;
-            color: white;
-            font-size: 24px;
-            background-image: url('https://i.ibb.co/HDjXW2F9/20250314-064406-0000.png');
-            background-size: cover;
-            background-position: center;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            height: 100%;
         }
-        #startScreen h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 58px;
-            color: black;
-            text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.8);
-            margin: 20px 0;
-        }
-        #startScreen p {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 12px;
-            color: black;
-            text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-            margin: 0;
-        }
-        #startScreen button {
-            margin: 10px;
-            padding: 10px;
-            font-size: 18px;
-            background-color: #00FF00;
-            border: none;
-            cursor: pointer;
-        }
-        #startScreen select {
-            margin-top: 10px;
-            padding: 5px;
-        }
-        #endScreen, #gameOverScreen {
+
+        .star {
             position: absolute;
-            text-align: center;
-            color: white;
-            font-size: 24px;
-            background-image: url('https://i.ibb.co/HDjXW2F9/20250314-064406-0000.png');
-            background-size: cover;
-            background-position: center;
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            display: none;
+            background: white;
+            border-radius: 50%;
+            animation: blink 2s infinite;
         }
-        #endScreen h2, #gameOverScreen h2 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 40px;
-            color: black;
-            text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.8);
-        }
-        #endScreen p, #gameOverScreen p {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 24px;
-            color: black;
-            text-shadow: 1px 1px 4px rgba(255, 255, 255, 0.8);
-        }
-        #endScreen button, #gameOverScreen button {
-            margin: 10px;
-            padding: 10px;
-            font-size: 18px;
-            background-color: #00FF00;
-            border: none;
-            cursor: pointer;
+
+        @keyframes blink {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <div id="startScreen">
-        <h1>CoinTaps</h1>
-        <button id="startBtn">Start Game</button>
-        <br />
-        <label for="languageSelect">Choose Language:</label>
-        <select id="languageSelect">
-            <option value="en">English</option>
-            <option value="es">Español</option>
-            <option value="fr">Français</option>
-            <option value="tr">Türkçe</option>
-            <option value="ru">Русский</option>
-        </select>
-        <br />
-        <button id="toggleSoundBtn">Mute</button>
-        <p>@llrsart</p>
+    <div class="glitch-container">
+        <canvas id="canvas" width="1024" height="1024"></canvas>
     </div>
-
-    <div id="endScreen">
-        <h2>Your Total Score: <span id="finalScore">0</span></h2>
-        <p>Congratulations!</p>
-        <button id="restartBtn">Restart Game</button>
-    </div>
-
-    <div id="gameOverScreen">
-        <h2 id="gameOverText">Game Over</h2>
-        <p>Your Total Score: <span id="gameOverScore">0</span></p>
-        <button id="tryAgainBtn">Try Again</button>
-    </div>
-
-    <canvas id="gameCanvas"></canvas>
 
     <script>
-        window.onload = function() {
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-            canvas.width = Math.min(400, window.innerWidth * 0.9);
-            canvas.height = Math.min(800, window.innerHeight * 0.8);
+        const image1 = new Image();
+        image1.src = "https://ipfs.io/ipfs/bafkreih63ixv33xfbhpeuvu6iabjrs7dn7h5d4egcnpbongoyqdvt7elfq";
 
-            const startScreen = document.getElementById('startScreen');
-            const endScreen = document.getElementById('endScreen');
-            const gameOverScreen = document.getElementById('gameOverScreen');
-            let score = 0;
-            let level = 1;
-            let lives = 5;
-            let levelDuration = 10000;
-            let objectSpeed = 360;
-            let objectSize = 80;
-            let objectDuration = 2000;
-            let objects = [];
-            let explosionEffect = null;
-            let redExplosionEffect = null;
-            let isMuted = false;
-            let gameStarted = false;
-            let maxObjects = 1;
-            let specialObjectCount = 0;
+        const image2 = new Image();
+        image2.src = "https://ipfs.io/ipfs/bafkreico2k7g53lyuaaywer25xcs3awxt45dzh6collv6x7rrjwm3viqyu";
 
-            const backgroundImage = new Image();
-            backgroundImage.src = 'https://i.ibb.co/8DLzXMxM/20250314-060105-0000.png';
+        let imagesLoaded = 0;
+        const totalImages = 2;
 
-            const hitSound = new Audio('https://www.freesoundeffects.com/sounds/coin-pickup-1.mp3');
-            const missSound = new Audio('https://www.freesoundeffects.com/sounds/coin-drop-1.mp3');
-            const backgroundMusic = new Audio('https://www.bensound.com/bensound-music/bensound-ukulele.mp3');
-            backgroundMusic.loop = true;
+        const onImageLoad = () => {
+            imagesLoaded++;
+            if (imagesLoaded === totalImages) {
+                startEffect();
+            }
+        };
 
-            let particles = [];
+        image1.onload = onImageLoad;
+        image2.onload = onImageLoad;
 
-            class Particle {
-                constructor() {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() * canvas.height;
-                    this.size = Math.random() * 5 + 1;
-                    this.speedX = Math.random() * 2 - 1;
-                    this.speedY = Math.random() * 2 - 1;
-                    this.life = Math.random() * 60 + 30;
-                    this.opacity = 1;
-                }
+        image1.onerror = () => console.error("Image 1 failed to load from IPFS");
+        image2.onerror = () => console.error("Image 2 failed to load from IPFS");
 
-                update() {
-                    this.x += this.speedX;
-                    this.y += this.speedY;
-                    this.life--;
-                    if (this.life <= 0) {
-                        this.opacity -= 0.02;
+        let currentImage = image1;
+        let nextImage = image2;
+        let size = 50;
+        let state = 'growing';
+        let stateTimer = 0;
+        let waveProgress = 0;
+
+        function applyCircularMask(size) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(512, 512, size / 2, 0, Math.PI * 2);
+            ctx.clip();
+        }
+
+        function applyWaveWithNoise(size, forward = true) {
+            const offset = (1024 - size) / 2;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = size;
+            tempCanvas.height = size;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Draw base image
+            tempCtx.drawImage(forward ? currentImage : nextImage, 0, 0, size, size);
+
+            // Wave effect
+            const imageData = tempCtx.getImageData(0, 0, size, size);
+            const data = imageData.data;
+            const newData = new Uint8ClampedArray(data.length);
+
+            for (let y = 0; y < size; y++) {
+                const waveOffset = Math.sin((forward ? y : (size - y)) * 0.05 + waveProgress * 10) * 20 * (1 - waveProgress);
+                for (let x = 0; x < size; x++) {
+                    const srcX = Math.floor(x + waveOffset);
+                    if (srcX >= 0 && srcX < size) {
+                        const srcIndex = (y * size + srcX) * 4;
+                        const destIndex = (y * size + x) * 4;
+                        newData[destIndex] = data[srcIndex];
+                        newData[destIndex + 1] = data[srcIndex + 1];
+                        newData[destIndex + 2] = data[srcIndex + 2];
+                        newData[destIndex + 3] = data[srcIndex + 3];
                     }
-                    if (this.x > canvas.width) this.x = 0;
-                    if (this.x < 0) this.x = canvas.width;
-                    if (this.y > canvas.height) this.y = 0;
-                    if (this.y < 0) this.y = canvas.height;
-                }
-
-                draw() {
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-                    ctx.fill();
                 }
             }
 
-            function spawnParticles() {
-                if (particles.length < 50) {
-                    particles.push(new Particle());
+            tempCtx.putImageData(new ImageData(newData, size, size), 0, 0);
+
+            // Add TV noise
+            const noiseData = tempCtx.getImageData(0, 0, size, size);
+            const noisePixels = noiseData.data;
+            const noiseIntensity = Math.sin(waveProgress * Math.PI) * 0.5; // Peaks in middle of transition
+            for (let i = 0; i < noisePixels.length; i += 4) {
+                if (Math.random() < noiseIntensity) {
+                    const gray = Math.random() * 255;
+                    noisePixels[i] = gray;      // R
+                    noisePixels[i + 1] = gray;  // G
+                    noisePixels[i + 2] = gray;  // B
+                    noisePixels[i + 3] = 255;   // A
                 }
-                particles = particles.filter(p => p.life > 0 && p.opacity > 0);
             }
+            tempCtx.putImageData(noiseData, 0, 0);
 
-            const languages = {
-                en: { score: "Score", level: "Level", timeLeft: "Time Left", startGame: "Start Game", mute: "Mute", unmute: "Unmute", gameOver: "Game Over", yourScore: "Your Total Score", congratulations: "Congratulations!", lives: "Lives", tryAgain: "Try Again" },
-                es: { score: "Puntuación", level: "Nivel", timeLeft: "Tiempo Restante", startGame: "Empezar Juego", mute: "Silenciar", unmute: "Activar Sonido", gameOver: "Juego Terminado", yourScore: "Tu Puntuación Total", congratulations: "¡Felicidades!", lives: "Vidas", tryAgain: "Intentar de Nuevo" },
-                fr: { score: "Score", level: "Niveau", timeLeft: "Temps Restant", startGame: "Démarrer le Jeu", mute: "Muet", unmute: "Son", gameOver: "Fin du Jeu", yourScore: "Votre Score Total", congratulations: "Félicitations !", lives: "Vies", tryAgain: "Réessayer" },
-                tr: { score: "Puan", level: "Seviye", timeLeft: "Kalan Zaman", startGame: "Oyuna Başla", mute: "Ses Kapat", unmute: "Ses Aç", gameOver: "Oyun Bitti", yourScore: "Toplam Puanın", congratulations: "Tebrikler!", lives: "Can", tryAgain: "Tekrar Dene" },
-                ru: { score: "Очки", level: "Уровень", timeLeft: "Оставшееся время", startGame: "Начать игру", mute: "Выключить звук", unmute: "Включить звук", gameOver: "Игра окончена", yourScore: "Ваш общий счет", congratulations: "Поздравляем!", lives: "Жизни", tryAgain: "Попробовать снова" }
-            };
+            ctx.drawImage(tempCanvas, offset, offset, size, size);
+        }
 
-            let currentLanguage = 'en';
+        const stars = [];
+        const shootingStars = [];
 
-            function changeLanguage(language) {
-                currentLanguage = language;
-                document.getElementById('startBtn').innerText = languages[currentLanguage].startGame;
-                document.getElementById('toggleSoundBtn').innerText = isMuted ? languages[currentLanguage].unmute : languages[currentLanguage].mute;
-                document.getElementById('endScreen').querySelector('h2').innerText = languages[currentLanguage].yourScore + ': ';
-                document.getElementById('endScreen').querySelector('p').innerText = languages[currentLanguage].congratulations;
-                document.getElementById('restartBtn').innerText = languages[currentLanguage].startGame;
-                document.getElementById('gameOverText').innerText = languages[currentLanguage].gameOver;
-                document.getElementById('tryAgainBtn').innerText = languages[currentLanguage].tryAgain;
+        function createStars() {
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = `${Math.random() * 3 + 1}px`;
+                star.style.height = star.style.width;
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.top = `${Math.random() * 100}vh`;
+                star.style.animationDelay = `${Math.random() * 2}s`;
+                document.body.appendChild(star);
+                stars.push(star);
             }
+        }
 
-            function startGame() {
-                console.log("startGame fonksiyonu çağrıldı"); // Hata ayıklama
-                gameStarted = true;
-                startScreen.style.display = 'none';
-                canvas.style.display = 'block';
-                endScreen.style.display = 'none';
-                gameOverScreen.style.display = 'none';
-                score = 0;
-                level = 1;
-                lives = 5;
-                levelDuration = 10000;
-                objects = [];
-                particles = [];
-                specialObjectCount = 0;
-                try {
-                    if (!isMuted) backgroundMusic.play();
-                } catch (error) {
-                    console.warn("Müzik oynatılamadı, oyun devam ediyor:", error);
-                }
-                gameLoop();
-                console.log("Oyun başlatıldı");
+        function createShootingStars() {
+            setInterval(() => {
+                const shootingStar = document.createElement('div');
+                shootingStar.className = 'star';
+                shootingStar.style.width = '2px';
+                shootingStar.style.height = '2px';
+                const startX = Math.random() * window.innerWidth;
+                const startY = Math.random() * window.innerHeight * 0.5;
+                shootingStar.style.left = `${startX}px`;
+                shootingStar.style.top = `${startY}px`;
+                document.body.appendChild(shootingStar);
+
+                const duration = 1 + Math.random() * 2;
+                shootingStar.style.animation = `shoot ${duration}s linear`;
+                shootingStar.style.setProperty('--endX', `${startX + 300}px`);
+                shootingStar.style.setProperty('--endY', `${startY + 300}px`);
+
+                shootingStars.push(shootingStar);
+                setTimeout(() => {
+                    shootingStar.remove();
+                    shootingStars.splice(shootingStars.indexOf(shootingStar), 1);
+                }, duration * 1000);
+            }, 2000);
+        }
+
+        const styleSheet = document.createElement('style');
+        styleSheet.innerHTML = `
+            @keyframes shoot {
+                0% { transform: translate(0, 0); opacity: 1; }
+                100% { transform: translate(var(--endX), var(--endY)); opacity: 0; }
             }
+        `;
+        document.head.appendChild(styleSheet);
 
-            function endGame(isGameOver = false) {
-                gameStarted = false;
-                canvas.style.display = 'none';
-                if (isGameOver) {
-                    gameOverScreen.style.display = 'flex';
-                    document.getElementById('gameOverScore').innerText = score;
+        function startEffect() {
+            createStars();
+            createShootingStars();
+
+            function drawFrame(timestamp) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const offset = (1024 - size) / 2;
+
+                applyCircularMask(size);
+
+                if (state === 'wave1' || state === 'wave2') {
+                    applyWaveWithNoise(size, state === 'wave1');
+                    waveProgress += 0.033; // 0.5s duration at 60fps
                 } else {
-                    endScreen.style.display = 'flex';
-                    const finalScoreElement = document.getElementById('finalScore');
-                    if (finalScoreElement) {
-                        finalScoreElement.innerText = score;
-                    }
-                }
-                try {
-                    if (!isMuted) backgroundMusic.pause();
-                } catch (error) {
-                    console.warn("Müzik durdurulamadı:", error);
-                }
-            }
-
-            const startBtn = document.getElementById('startBtn');
-            if (startBtn) {
-                startBtn.addEventListener('click', () => {
-                    console.log("Start butonuna tıklandı"); // Hata ayıklama
-                    startGame();
-                });
-            } else {
-                console.error("startBtn bulunamadı!");
-            }
-
-            document.getElementById('languageSelect').addEventListener('change', (event) => {
-                changeLanguage(event.target.value);
-            });
-
-            document.getElementById('toggleSoundBtn').addEventListener('click', () => {
-                isMuted = !isMuted;
-                document.getElementById('toggleSoundBtn').innerText = isMuted ? languages[currentLanguage].unmute : languages[currentLanguage].mute;
-                try {
-                    if (isMuted) {
-                        backgroundMusic.pause();
-                    } else {
-                        backgroundMusic.play();
-                    }
-                } catch (error) {
-                    console.warn("Ses kontrol hatası:", error);
-                }
-            });
-
-            document.getElementById('restartBtn').addEventListener('click', startGame);
-            document.getElementById('tryAgainBtn').addEventListener('click', startGame);
-
-            const images = [
-                "https://cryptologos.cc/logos/ethereum-eth-logo.png?v=040",
-                "https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=040",
-                "https://cryptologos.cc/logos/usd-coin-usdc-logo.png?v=040",
-                "https://cryptologos.cc/logos/solana-sol-logo.png?v=040",
-                "https://cryptologos.cc/logos/bnb-bnb-logo.png?v=040",
-                "https://cryptologos.cc/logos/dogecoin-doge-logo.png?v=040",
-                "https://cryptologos.cc/logos/tron-trx-logo.png?v=040",
-                "https://cryptologos.cc/logos/sui-sui-logo.png?v=040",
-                "https://cryptologos.cc/logos/pepe-pepe-logo.png?v=040",
-                "https://i.ibb.co/Q3MwcyWt/1000017966-fotor-bg-remover-20250314162444.png"
-            ];
-
-            const preloadedImages = images.map(src => {
-                const img = new Image();
-                img.src = src;
-                return img;
-            });
-
-            class Explosion {
-                constructor(x, y, isRed = false) {
-                    this.x = x;
-                    this.y = y;
-                    this.radius = 0;
-                    this.maxRadius = 60;
-                    this.opacity = 1;
-                    this.isRed = isRed;
+                    ctx.drawImage(currentImage, offset, offset, size, size);
                 }
 
-                draw() {
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-                    ctx.fillStyle = this.isRed ? `rgba(255, 0, 0, ${this.opacity})` : `rgba(255, 255, 255, ${this.opacity})`;
-                    ctx.fill();
-                }
+                ctx.restore();
 
-                update() {
-                    if (this.radius < this.maxRadius) {
-                        this.radius += 1;
-                        this.opacity -= 0.02;
-                    }
-                }
-            }
+                stateTimer += 16.67; // Approx 60fps frame time in ms
 
-            class GameObject {
-                constructor() {
-                    this.x = Math.random() * (canvas.width - objectSize);
-                    this.y = -objectSize;
-                    this.image = preloadedImages[Math.floor(Math.random() * preloadedImages.length)];
-                    this.visible = true;
-                    this.timer = Date.now();
-                    this.lifetime = Math.random() * 2000 + 1500;
-                    this.isSpecial = this.image.src.includes('1000017966-fotor-bg-remover');
-                }
-
-                draw() {
-                    if (this.visible) {
-                        ctx.drawImage(this.image, this.x, this.y, objectSize, objectSize);
-                    }
-                }
-
-                update() {
-                    this.y += objectSpeed / 100;
-                    if (this.y > canvas.height) {
-                        this.visible = false;
-                    }
-                    if (Date.now() - this.timer > this.lifetime) {
-                        this.visible = false;
-                    }
-                }
-            }
-
-            function drawBackground() {
-                if (backgroundImage.complete) {
-                    ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
-                } else {
-                    ctx.fillStyle = 'rgb(64, 64, 64)';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                }
-
-                particles.forEach(particle => {
-                    particle.update();
-                    particle.draw();
-                });
-            }
-
-            function handleInput(event) {
-                if (!gameStarted) return;
-                event.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                const x = (event.type === 'touchstart' ? event.touches[0].clientX : event.clientX) - rect.left;
-                const y = (event.type === 'touchstart' ? event.touches[0].clientY : event.clientY) - rect.top;
-
-                let correctClick = false;
-
-                for (let i = objects.length - 1; i >= 0; i--) {
-                    const object = objects[i];
-                    if (object.visible && x >= object.x && x <= object.x + objectSize &&
-                        y >= object.y && y <= object.y + objectSize) {
-                        if (object.isSpecial) {
-                            score = 0;
-                            lives -= 1;
-                            object.visible = false;
-                            redExplosionEffect = new Explosion(object.x + objectSize / 2, object.y + objectSize / 2, true);
-                            try {
-                                if (!isMuted) missSound.play();
-                            } catch (error) {
-                                console.warn("Miss sound oynatma hatası:", error);
-                            }
-                            if (lives <= 0) {
-                                endGame(true);
-                            }
-                        } else {
-                            correctClick = true;
-                            score += 10;
-                            object.visible = false;
-                            explosionEffect = new Explosion(object.x + objectSize / 2, object.y + objectSize / 2);
-                            try {
-                                if (!isMuted) hitSound.play();
-                            } catch (error) {
-                                console.warn("Hit sound oynatma hatası:", error);
-                            }
+                switch (state) {
+                    case 'growing':
+                        size = 50 + (500 - 50) * (stateTimer / 1000);
+                        if (stateTimer >= 1000) {
+                            size = 500;
+                            state = 'wait1';
+                            stateTimer = 0;
                         }
                         break;
-                    }
-                }
-
-                if (!correctClick && !object?.isSpecial) {
-                    score -= 5;
-                    try {
-                        if (!isMuted) missSound.play();
-                    } catch (error) {
-                        console.warn("Miss sound oynatma hatası:", error);
-                    }
-                }
-            }
-
-            canvas.addEventListener('click', handleInput);
-            canvas.addEventListener('touchstart', handleInput);
-
-            function increaseDifficulty() {
-                if (level < 20) {
-                    level++;
-                    levelDuration = 10000;
-                    objectDuration = Math.max(1000, objectDuration - 200);
-                    specialObjectCount = 0;
-                }
-            }
-
-            function getMaxObjectsForLevel(level) {
-                if (level <= 4) return 1;
-                else return 2;
-            }
-
-            function spawnObject() {
-                const maxObjectsForCurrentLevel = getMaxObjectsForLevel(level);
-                for (let i = 0; i < maxObjectsForCurrentLevel; i++) {
-                    if (specialObjectCount < 4 && Math.random() < 0.2) {
-                        const newObject = new GameObject();
-                        if (newObject.isSpecial) {
-                            specialObjectCount++;
-                            if (specialObjectCount > 4) continue;
+                    case 'wait1':
+                        if (stateTimer >= 1000) {
+                            state = 'wave1';
+                            stateTimer = 0;
+                            waveProgress = 0;
+                            nextImage = image2;
                         }
-                        objects.push(newObject);
-                    } else {
-                        const newObject = new GameObject();
-                        objects.push(newObject);
-                    }
+                        break;
+                    case 'wave1':
+                        if (stateTimer >= 500) {
+                            currentImage = nextImage;
+                            state = 'wait2';
+                            stateTimer = 0;
+                            waveProgress = 0;
+                        }
+                        break;
+                    case 'wait2':
+                        if (stateTimer >= 1000) {
+                            state = 'wave2';
+                            stateTimer = 0;
+                            waveProgress = 0;
+                            nextImage = image1;
+                        }
+                        break;
+                    case 'wave2':
+                        if (stateTimer >= 500) {
+                            currentImage = nextImage;
+                            state = 'wait3';
+                            stateTimer = 0;
+                            waveProgress = 0;
+                        }
+                        break;
+                    case 'wait3':
+                        if (stateTimer >= 1000) {
+                            state = 'shrinking';
+                            stateTimer = 0;
+                        }
+                        break;
+                    case 'shrinking':
+                        size = 500 - (500 - 50) * (stateTimer / 1000);
+                        if (stateTimer >= 1000) {
+                            size = 50;
+                            state = 'growing';
+                            stateTimer = 0;
+                        }
+                        break;
                 }
-                objects = objects.filter(obj => obj.visible);
+
+                requestAnimationFrame(drawFrame);
             }
 
-            let lastTime = Date.now();
-            let spawnTimer = 0;
-            let particleSpawnTimer = 0;
-
-            function drawGameElements() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                drawBackground();
-
-                ctx.fillStyle = `rgb(64, 64, 64)`;
-                ctx.font = '20px Arial';
-                ctx.fillText(`${languages[currentLanguage].score}: ${score}`, 20, 30);
-                ctx.fillText(`${languages[currentLanguage].level}: ${level}`, 20, 60);
-                ctx.fillText(`${languages[currentLanguage].timeLeft}: ${Math.max(0, Math.floor(levelDuration / 1000))}`, 20, 90);
-
-                // Kalan canları sağ üstte kalp simgeleriyle göster
-                ctx.font = '24px Arial';
-                for (let i = 0; i < lives; i++) {
-                    ctx.fillText('❤️', canvas.width - 30 * (i + 1), 30);
-                }
-
-                objects.forEach(object => {
-                    object.update();
-                    object.draw();
-                });
-
-                if (explosionEffect) {
-                    explosionEffect.update();
-                    explosionEffect.draw();
-                    if (explosionEffect.opacity <= 0) {
-                        explosionEffect = null;
-                    }
-                }
-
-                if (redExplosionEffect) {
-                    redExplosionEffect.update();
-                    redExplosionEffect.draw();
-                    if (redExplosionEffect.opacity <= 0) {
-                        redExplosionEffect = null;
-                    }
-                }
-            }
-
-            function gameLoop() {
-                if (!gameStarted) return;
-
-                const now = Date.now();
-                const deltaTime = now - lastTime;
-                lastTime = now;
-
-                levelDuration -= deltaTime;
-                spawnTimer += deltaTime;
-                particleSpawnTimer += deltaTime;
-
-                if (levelDuration <= 0) {
-                    if (level === 20) {
-                        endGame(false);
-                    } else {
-                        increaseDifficulty();
-                    }
-                }
-
-                if (spawnTimer >= objectSpeed) {
-                    spawnObject();
-                    spawnTimer = 0;
-                }
-
-                if (particleSpawnTimer >= 200) {
-                    spawnParticles();
-                    particleSpawnTimer = 0;
-                }
-
-                drawGameElements();
-                if (gameStarted) requestAnimationFrame(gameLoop);
-            }
-
-            changeLanguage('en');
-        };
+            requestAnimationFrame(drawFrame);
+        }
     </script>
 </body>
 </html>
